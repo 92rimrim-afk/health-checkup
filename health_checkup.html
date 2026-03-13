@@ -74,6 +74,13 @@ header p { font-size:13px; opacity:0.8; }
 .date-btn.full { background:#F8F9FA; border-color:#E0E0E0; cursor:not-allowed; opacity:.6; }
 .date-btn.full .day { color:var(--text-muted); }
 .date-btn.full .slots { color:var(--red); }
+.date-btn.excluded { background:#F0F0F0; border-color:#C0C0C0; cursor:not-allowed; opacity:.7; }
+.date-btn.excluded .day { color:#999; }
+.date-btn.excluded .slots { color:#999; font-style:italic; }
+.date-btn.excluded { background:#FFF5F5; border-color:#FADBD8; cursor:not-allowed; }
+.date-btn.excluded .day { color:#E74C3C; }
+.date-btn.excluded .dow { color:#E74C3C; }
+.date-btn.excluded .slots { color:#E74C3C; font-weight:600; }
 .date-btn.weekend .dow { color:#E74C3C; }
 
 /* ENDOSCOPY */
@@ -324,6 +331,8 @@ const OPTIONAL_ITEMS = [
 ];
 
 // 날짜 생성
+const EXCLUDED_DATES = ['2026-03-31', '2026-04-21', '2026-04-30'];
+
 function getWorkDates() {
   const dates = [];
   const start = new Date('2026-03-16');
@@ -403,19 +412,20 @@ function renderDates() {
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
     const dateStr = `${yyyy}-${mm}-${dd}`;
+    const isExcluded = EXCLUDED_DATES.includes(dateStr);
     const cnt = getCount(dateStr);
     const remaining = 4 - cnt;
-    const full = remaining <= 0;
-    const almost = remaining === 1;
+    const full = remaining <= 0 || isExcluded;
+    const almost = remaining === 1 && !isExcluded;
 
     const btn = document.createElement('button');
-    btn.className = 'date-btn' + (full?' full':'') + (almost?' almost':'');
+    btn.className = 'date-btn' + (full?' full':'') + (almost?' almost':'') + (isExcluded?' excluded':'');
     btn.dataset.date = dateStr;
     btn.type = 'button';
     btn.innerHTML = `
       <span class="dow">${DOW_KR[d.getDay()]}</span>
       <span class="day">${d.getMonth()+1}/${d.getDate()}</span>
-      <span class="slots">${full ? '마감' : remaining+'명 가능'}</span>
+      <span class="slots">${isExcluded ? '회사행사' : (full ? '마감' : remaining+'명 가능')}</span>
     `;
     if (!full) btn.onclick = () => selectDate(dateStr, btn);
     grid.appendChild(btn);
