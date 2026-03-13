@@ -338,20 +338,36 @@ function getWorkDates() {
 // ── Google Sheets 연동 ───────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPuiy-NakGnRVOSYzbPy30kEm36_aQi_yvAs3SXF2pv-49SGO7lrm_8YULwDVJwg/exec';
 
-// 신청 저장소 (로컬 캐시)
 let applications = [];
+
+// 구글 시트 날짜값 → YYYY-MM-DD 변환
+function parseSheetDate(val) {
+  if (!val) return '';
+  const s = String(val);
+  // 이미 YYYY-MM-DD 형식
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // ISO 형식 (2026-03-15T15:00:00.000Z 등) → 한국시간 기준
+  if (s.includes('T')) {
+    const d = new Date(s);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()+1).padStart(2,'0'); // UTC+9 보정
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return s;
+}
 
 async function loadApps() {
   try {
-    const res = await fetch(SCRIPT_URL);
+    const res = await fetch(SCRIPT_URL + '?t=' + Date.now()); // 캐시 방지
     const json = await res.json();
     const rows = json.data;
-    if (rows.length <= 1) { applications = []; return; }
-    applications = rows.slice(1).map((r, i) => ({
+    if (!rows || rows.length <= 1) { applications = []; renderDates(); return; }
+    applications = rows.slice(1).filter(r => r[1]).map((r, i) => ({
       id: i+1,
       name: r[1],
       phone: r[2],
-      date: r[3],
+      date: parseSheetDate(r[3]),
       endo: r[4],
       opts: r[5],
       optCost: r[6],
@@ -382,16 +398,18 @@ function renderDates() {
   const dates = getWorkDates();
   grid.innerHTML = '';
   dates.forEach(d => {
-    const ds = d.toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit'}).replace(/\. /g,'-').replace('.','');
-    const dateStr = d.toISOString().slice(0,10);
+    // toISOString() 대신 로컬 날짜 직접 사용 (timezone 버그 수정)
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
     const cnt = getCount(dateStr);
     const remaining = 4 - cnt;
     const full = remaining <= 0;
     const almost = remaining === 1;
-    const isSat = d.getDay() === 6;
 
     const btn = document.createElement('button');
-    btn.className = 'date-btn' + (full?' full':'') + (almost?' almost':'') + (isSat?' weekend':'');
+    btn.className = 'date-btn' + (full?' full':'') + (almost?' almost':'');
     btn.dataset.date = dateStr;
     btn.type = 'button';
     btn.innerHTML = `
@@ -610,7 +628,6 @@ function showToast(msg) {
 }
 
 // ── 초기화 ───────────────────────────────────────────
-renderDates();
 renderOptions();
 calcTotal();
 loadApps();
