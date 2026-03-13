@@ -292,11 +292,14 @@ header p { font-size:13px; opacity:0.8; }
   <div class="form-card result-section" id="resultSection" style="margin-top:0;display:none;">
     <div class="result-header">
       <h2>📋 신청 현황 <span id="resultCount" style="font-size:13px;color:var(--text-muted);font-weight:400;"></span></h2>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="refreshBtn" onclick="refreshResult()" style="padding:9px 16px;background:#2E86C1;color:white;border:none;border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">🔄 새로고침</button>
         <button class="copy-btn" onclick="copyToClipboard()">📋 엑셀 복사</button>
         <button onclick="lockAdmin()" style="padding:9px 16px;background:#E0E0E0;color:var(--text);border:none;border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">🔒 잠금</button>
       </div>
     </div>
+    <!-- 날짜 탭 -->
+    <div id="dateTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
     <div style="overflow-x:auto;">
       <table class="result-table" id="resultTable">
         <thead>
@@ -586,30 +589,114 @@ function lockAdmin() {
   document.getElementById('adminPw').value = '';
 }
 
+// ── 날짜 탭 ─────────────────────────────────────────
+let selectedTab = '전체';
+
+function renderTabs() {
+  const tabs = document.getElementById('dateTabs');
+  if (!tabs) return;
+  const dates = [...new Set(applications.map(a => a.date))].sort();
+  const all = ['전체', ...dates];
+  tabs.innerHTML = all.map(d => {
+    const cnt = d === '전체' ? applications.length : applications.filter(a => a.date === d).length;
+    const allForDate = applications.filter(a => a.date === d);
+    const over = d !== '전체' && cnt > 4;
+    const isActive = selectedTab === d;
+    const bg = isActive ? '#1B4F72' : over ? '#FADBD8' : '#F0F4F8';
+    const color = isActive ? 'white' : over ? '#A32D2D' : '#1C2833';
+    const border = over && !isActive ? '#F1948A' : '#D5D8DC';
+    const mm = d === '전체' ? '' : d.slice(5).replace('-', '/');
+    const label = d === '전체' ? `전체 (${cnt}명)` : `${mm} (${cnt}명)`;
+    return `<button onclick="selectTab('${d}')" style="padding:6px 12px;border:1.5px solid ${border};border-radius:20px;background:${bg};color:${color};font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">${label}</button>`;
+  }).join('');
+}
+
+function selectTab(date) {
+  selectedTab = date;
+  renderTabs();
+  renderResult();
+}
+
 // ── 결과 테이블 ──────────────────────────────────────
 function renderResult() {
   const tbody = document.getElementById('resultBody');
   const countEl = document.getElementById('resultCount');
-  countEl.textContent = `(총 ${applications.length}명)`;
 
-  if (applications.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">아직 신청 내역이 없습니다.</td></tr>';
+  // 탭 필터 적용
+  const filtered = selectedTab === '전체' ? applications : applications.filter(a => a.date === selectedTab);
+  countEl.textContent = selectedTab === '전체' ? `(총 ${applications.length}명)` : `(${selectedTab} / ${filtered.length}명)`;
+
+  renderTabs();
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">신청 내역이 없습니다.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = applications.map((a, i) => `
-    <tr>
-      <td>${i+1}</td>
-      <td><strong>${a.name}</strong></td>
-      <td>${a.phone}</td>
-      <td>${a.date}</td>
-      <td><span class="tag tag-endo">${a.endo}</span></td>
-      <td>${a.opts === '-' ? '-' : a.opts.split(', ').map(o=>`<span class="tag tag-opt">${o}</span>`).join('')}</td>
-      <td>${a.optCost > 0 ? a.optCost.toLocaleString()+'원' : '-'}</td>
-      <td style="color:var(--text-muted);font-size:11px;">${a.createdAt}</td>
-      <td><button onclick="deleteApp(${a.id})" style="padding:5px 12px;background:#FADBD8;color:#E74C3C;border:1px solid #F1948A;border-radius:6px;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">삭제</button></td>
-    </tr>
-  `).join('');
+  // 날짜별 그룹핑
+  const grouped = {};
+  filtered.forEach(a => {
+    if (!grouped[a.date]) grouped[a.date] = [];
+    grouped[a.date].push(a);
+  });
+
+  const allGrouped = {};
+  applications.forEach(a => {
+    if (!allGrouped[a.date]) allGrouped[a.date] = [];
+    allGrouped[a.date].push(a);
+  });
+
+  const sortedDates = Object.keys(grouped).sort();
+  let rows = '';
+  let no = 1;
+
+  sortedDates.forEach(date => {
+    const group = grouped[date];
+    const totalForDate = allGrouped[date] ? allGrouped[date].length : group.length;
+    const isBlocked = EXCLUDED_DATES.includes(date);
+    const over = totalForDate > 4 || isBlocked;
+    const headerBg = over ? '#FADBD8' : '#EAF3DE';
+    const headerColor = over ? '#A32D2D' : '#3B6D11';
+    const label = isBlocked ? '회사행사' : over ? `${totalForDate}명 (${totalForDate-4}명 초과!)` : `${totalForDate}명`;
+
+    if (selectedTab === '전체') {
+      rows += `<tr>
+        <td colspan="9" style="background:${headerBg};color:${headerColor};font-weight:600;font-size:12px;padding:6px 12px;">
+          ${date} &nbsp;|&nbsp; ${label}
+        </td>
+      </tr>`;
+    }
+
+    group.forEach(a => {
+      const idxInAll = allGrouped[date] ? allGrouped[date].indexOf(a) : -1;
+      const rowBg = over && idxInAll >= 4 ? '#FFF3F3' : '';
+      const overTag = over && idxInAll >= 4 ? '<span style="background:#FADBD8;color:#A32D2D;font-size:10px;padding:1px 6px;border-radius:4px;margin-left:4px;">초과</span>' : '';
+      rows += `<tr style="background:${rowBg}">
+        <td>${no++}</td>
+        <td><strong>${a.name}</strong>${overTag}</td>
+        <td>${a.phone}</td>
+        <td>${a.date}</td>
+        <td><span class="tag tag-endo">${a.endo}</span></td>
+        <td>${a.opts === '-' ? '-' : a.opts.split(', ').map(o=>`<span class="tag tag-opt">${o}</span>`).join('')}</td>
+        <td>${a.optCost > 0 ? a.optCost.toLocaleString()+'원' : '-'}</td>
+        <td style="color:var(--text-muted);font-size:11px;">${a.createdAt}</td>
+        <td><button onclick="deleteApp(${a.id})" style="padding:5px 12px;background:#FADBD8;color:#E74C3C;border:1px solid #F1948A;border-radius:6px;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">삭제</button></td>
+      </tr>`;
+    });
+  });
+
+  tbody.innerHTML = rows;
+}
+
+async function refreshResult() {
+  const btn = document.getElementById('refreshBtn');
+  btn.textContent = '새로고침 중...';
+  btn.disabled = true;
+  await loadApps();
+  renderResult();
+  btn.textContent = '🔄 새로고침';
+  btn.disabled = false;
+  showToast('✅ 최신 데이터로 업데이트되었습니다.');
 }
 
 // ── 삭제 ─────────────────────────────────────────────
