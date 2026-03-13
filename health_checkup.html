@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 선도소프트 건강검진 안내</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #1B4F72;
+  --primary-light: #2E86C1;
+  --accent: #27AE60;
+  --bg: #F0F4F8;
+  --card: #FFFFFF;
+  --text: #1C2833;
+  --text-muted: #717D7E;
+  --border: #D5D8DC;
+  --red: #E74C3C;
+  --radius: 12px;
+  --shadow: 0 4px 20px rgba(27,79,114,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+header {
+  background: linear-gradient(135deg, #1B4F72 0%, #2E86C1 100%);
+  color: white; padding: 48px 24px 44px; text-align: center; position: relative; overflow: hidden;
+}
+header::before { content:''; position:absolute; top:-60px; right:-60px; width:220px; height:220px; border-radius:50%; background:rgba(255,255,255,0.06); }
+header::after { content:''; position:absolute; bottom:-40px; left:-40px; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,0.04); }
+.badge { display:inline-block; background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.3); border-radius:20px; padding:4px 16px; font-size:12px; letter-spacing:0.08em; margin-bottom:14px; }
+header h1 { font-family:'DM Serif Display',serif; font-size:clamp(22px,5vw,34px); font-weight:400; margin-bottom:8px; }
+header p { font-size:13px; opacity:0.8; }
+
+.container { max-width: 780px; margin: 0 auto; padding: 32px 16px 80px; }
+
+.info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:24px; }
+.info-card { background:var(--card); border-radius:var(--radius); padding:16px 20px; box-shadow:var(--shadow); border-left:3px solid var(--primary-light); }
+.info-card .lbl { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
+.info-card .val { font-size:14px; font-weight:700; color:var(--primary); }
+
+.notice { background:#EBF5FB; border:1px solid #AED6F1; border-radius:var(--radius); padding:16px 20px; margin-bottom:24px; font-size:13px; color:var(--primary); line-height:1.6; }
+.notice strong { margin-bottom:8px; font-size:14px; }
+.notice p { margin:4px 0; }
+
+.form-card { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px 24px; margin-bottom:20px; }
+.section-title { font-size:16px; font-weight:700; color:var(--primary); margin-bottom:20px; padding-bottom:12px; border-bottom:2px solid var(--bg); display:flex; align-items:center; gap:8px; }
+.section-icon { width:28px; height:28px; background:var(--primary); border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-size:13px; flex-shrink:0; }
+
+.field { margin-bottom:18px; }
+.field label { display:block; font-size:13px; font-weight:600; margin-bottom:7px; }
+.req { color:var(--red); }
+.field input, .field select {
+  width:100%; padding:11px 14px; border:1.5px solid var(--border); border-radius:8px;
+  font-family:'Noto Sans KR',sans-serif; font-size:14px; color:var(--text); background:white; transition:border-color .2s,box-shadow .2s;
+}
+.field input:focus, .field select:focus { outline:none; border-color:var(--primary-light); box-shadow:0 0 0 3px rgba(46,134,193,0.12); }
+.field select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23717D7E' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+
+/* DATE PICKER */
+.date-hint { font-size:12px; color:var(--text-muted); margin-bottom:10px; }
+.date-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:7px; }
+.date-btn {
+  padding:9px 4px; border:1.5px solid var(--border); border-radius:8px; background:white;
+  cursor:pointer; text-align:center; transition:all .15s; font-family:'Noto Sans KR',sans-serif; position:relative;
+}
+.date-btn .dow { font-size:10px; color:var(--text-muted); display:block; margin-bottom:2px; }
+.date-btn .day { font-size:13px; font-weight:700; color:var(--text); display:block; }
+.date-btn .slots { font-size:10px; display:block; margin-top:3px; color:var(--accent); }
+.date-btn:hover:not(.full):not(.selected) { border-color:var(--primary-light); background:#EBF5FB; }
+.date-btn.selected { border-color:var(--primary); background:var(--primary); }
+.date-btn.selected .day, .date-btn.selected .dow, .date-btn.selected .slots { color:white; }
+.date-btn.almost .slots { color:#F39C12; }
+.date-btn.full { background:#F8F9FA; border-color:#E0E0E0; cursor:not-allowed; opacity:.6; }
+.date-btn.full .day { color:var(--text-muted); }
+.date-btn.full .slots { color:var(--red); }
+.date-btn.excluded { background:#F0F0F0; border-color:#C0C0C0; cursor:not-allowed; opacity:.7; }
+.date-btn.excluded .day { color:#999; }
+.date-btn.excluded .slots { color:#999; font-style:italic; }
+.date-btn.excluded { background:#FFF5F5; border-color:#FADBD8; cursor:not-allowed; }
+.date-btn.excluded .day { color:#E74C3C; }
+.date-btn.excluded .dow { color:#E74C3C; }
+.date-btn.excluded .slots { color:#E74C3C; font-weight:600; }
+.date-btn.weekend .dow { color:#E74C3C; }
+
+/* ENDOSCOPY */
+.endo-options { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
+.radio-card { border:1.5px solid var(--border); border-radius:8px; padding:12px; cursor:pointer; text-align:center; transition:all .15s; }
+.radio-card:hover { border-color:var(--primary-light); background:#EBF5FB; }
+.radio-card.selected { border-color:var(--primary); background:#EBF5FB; }
+.radio-card input { display:none; }
+.radio-card .rname { font-size:13px; font-weight:600; color:var(--text); display:block; }
+.radio-card .rdesc { font-size:11px; color:var(--text-muted); margin-top:2px; display:block; }
+.radio-card.selected .rname { color:var(--primary); }
+
+/* FREE ITEMS */
+.free-section { background:#F0F9F4; border:1px solid #A9DFBF; border-radius:var(--radius); padding:16px 20px; margin-bottom:8px; }
+.free-section .free-title { font-size:13px; font-weight:700; color:var(--accent); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.free-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:5px; }
+.free-item { font-size:12px; color:#1D6A3A; padding:4px 8px; background:rgba(39,174,96,0.08); border-radius:5px; }
+
+/* OPTIONAL ITEMS */
+.opt-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:8px; margin-top:8px; }
+.opt-card {
+  border:1.5px solid var(--border); border-radius:8px; padding:12px 14px; cursor:pointer;
+  transition:all .15s; background:white; display:flex; align-items:flex-start; gap:10px;
+}
+.opt-card:hover { border-color:var(--primary-light); background:#EBF5FB; }
+.opt-card.checked { border-color:var(--primary-light); background:#EBF5FB; }
+.opt-card input[type="checkbox"] { accent-color:var(--primary); width:15px; height:15px; flex-shrink:0; margin-top:2px; cursor:pointer; }
+.opt-name { font-size:13px; font-weight:600; color:var(--text); display:block; line-height:1.4; }
+.opt-price { font-size:11.5px; color:var(--text-muted); margin-top:3px; }
+.opt-price .disc { color:var(--primary); font-weight:700; }
+
+/* TOTAL */
+.total-bar { background:var(--primary); color:white; border-radius:var(--radius); padding:18px 24px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.total-bar .tlabel { font-size:14px; opacity:0.85; }
+.total-bar .tamt { font-size:22px; font-weight:700; }
+.total-bar .tfree { font-size:12px; opacity:0.7; }
+
+/* SUBMIT */
+.submit-btn {
+  width:100%; padding:16px; background:linear-gradient(135deg,#1B4F72,#2E86C1);
+  color:white; font-family:'Noto Sans KR',sans-serif; font-size:16px; font-weight:700;
+  border:none; border-radius:var(--radius); cursor:pointer; transition:opacity .2s, transform .1s;
+  letter-spacing:0.02em;
+}
+.submit-btn:hover { opacity:.92; transform:translateY(-1px); }
+.submit-btn:active { transform:translateY(0); }
+
+/* RESULT TABLE */
+.result-section { display:none; }
+.result-section.show { display:block; }
+.result-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+.result-header h2 { font-size:17px; font-weight:700; color:var(--primary); }
+.copy-btn {
+  padding:9px 20px; background:var(--accent); color:white; border:none; border-radius:8px;
+  font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:opacity .2s;
+}
+.copy-btn:hover { opacity:.85; }
+.result-table { width:100%; border-collapse:collapse; font-size:13px; }
+.result-table th { background:var(--primary); color:white; padding:10px 12px; text-align:left; font-weight:600; font-size:12px; }
+.result-table td { padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+.result-table tr:hover td { background:#F8FBFF; }
+.result-table tr:last-child td { border-bottom:none; }
+.tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; }
+.tag-endo { background:#EBF5FB; color:var(--primary); }
+.tag-opt { background:#F0F9F4; color:var(--accent); margin:2px 2px 2px 0; }
+
+.empty-state { text-align:center; padding:40px; color:var(--text-muted); font-size:14px; }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+  background:#1C2833; color:white; padding:12px 24px; border-radius:24px; font-size:14px;
+  font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,0.3); transition:transform .3s ease; z-index:9999;
+  white-space:nowrap;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+@media (max-width: 480px) {
+  .form-card { padding:20px 16px; }
+  .endo-options { grid-template-columns:1fr; }
+  .date-grid { grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">2026 선도소프트 건강검진 안내</div>
+  <h1>선도소프트 건강검진 신청</h1>
+  <p>검진기간 2026.03.16(월) – 2026.04.30(목)</p>
+</header>
+
+<div class="container">
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="lbl">검진 기간</div>
+      <div class="val">3월 16일(월) ~ 4월 30일(목)</div>
+    </div>
+    <div class="info-card">
+      <div class="lbl">일 정원</div>
+      <div class="val">하루 최대 4명</div>
+    </div>
+  </div>
+
+  <div class="notice">
+    <strong>📋 안내사항</strong>
+    <div>★ <strong>건강검진 필수대상자는 반차 차감 / 이외 연차 차감</strong></div>
+    <div>★ 내시경 수면비 별도 없음 (수면/비수면 선택 가능)</div>
+    <div>★ 위내시경 중 헬리코박터·조직검사 시 추가비용 발생</div>
+    <div>★ 남성: 전립선초음파 포함 / 여성: 유방X선·액상자궁경부암세포검사 포함</div>
+    <div>★ 유소견자 3차 의료기관 진료의뢰서 발급</div>
+    <div style="margin-top:10px;">🏥 <strong>로뎀나무내과</strong></div>
+    <div style="font-size:12px;">서울 영등포구 영신로 259 호산당빌딩 &nbsp;|&nbsp; ☎ 02-1588-7487 (내선 2번)</div>
+  </div>
+
+  <!-- 신청 폼 -->
+  <div class="form-card">
+    <div class="section-title"><div class="section-icon">①</div>기본 정보</div>
+    <div class="field">
+      <label>이름 <span class="req">*</span></label>
+      <input type="text" id="name" placeholder="홍길동">
+    </div>
+    <div class="field">
+      <label>연락처 <span class="req">*</span></label>
+      <input type="tel" id="phone" placeholder="010-0000-0000">
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="section-title"><div class="section-icon">②</div>희망 검진 일자</div>
+    <div class="date-hint">날짜를 선택하세요. 회색 날짜는 정원(4명)이 마감되었습니다.</div>
+    <div class="date-grid" id="dateGrid"></div>
+    <input type="hidden" id="selectedDate">
+  </div>
+
+  <div class="form-card">
+    <div class="section-title"><div class="section-icon">③</div>내시경 선택</div>
+    <div class="endo-options">
+      <label class="radio-card" id="endo_no">
+        <input type="radio" name="endo" value="안함">
+        <span class="rname">안함</span>
+        <span class="rdesc">내시경 미선택</span>
+      </label>
+      <label class="radio-card" id="endo_awake">
+        <input type="radio" name="endo" value="비수면">
+        <span class="rname">비수면</span>
+        <span class="rdesc">일반 위내시경</span>
+      </label>
+      <label class="radio-card" id="endo_sleep">
+        <input type="radio" name="endo" value="수면">
+        <span class="rname">수면</span>
+        <span class="rdesc">수면 위내시경</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="section-title"><div class="section-icon">④</div>무료 건강검진 항목</div>
+    <div class="free-section">
+      <div class="free-title">✅ 기본 포함 항목 (전 직원 무료)</div>
+      <div class="free-list">
+        <div class="free-item">복부초음파 (간·신장·담낭·췌장·비장)</div>
+        <div class="free-item">갑상선 혈액+초음파</div>
+        <div class="free-item">간기능·신장기능·순환기계 혈액검사</div>
+        <div class="free-item">B형·C형 간염검사</div>
+        <div class="free-item">빈혈·혈액검사</div>
+        <div class="free-item">AFP·Chest PA (간암·폐암)</div>
+        <div class="free-item">정밀청력검사</div>
+        <div class="free-item">심전도(12전도)</div>
+        <div class="free-item">폐기능검사</div>
+        <div class="free-item">골밀도검사</div>
+        <div class="free-item">통풍검사 (Uric Acid)</div>
+        <div class="free-item">체성분측정</div>
+        <div class="free-item">소변검사</div>
+        <div class="free-item">이학적검사 (의사초진·혈압·시력)</div>
+        <div class="free-item">판독 및 결과상담</div>
+        <div class="free-item">★ 남: 전립선초음파 / 여: 유방X선·자궁경부암</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="section-title"><div class="section-icon">⑤</div>추가 선택 검사 <span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:8px;">(직원 할인가 적용)</span></div>
+    <div class="opt-grid" id="optGrid"></div>
+  </div>
+
+  <div class="total-bar">
+    <div>
+      <div class="tlabel">선택 추가검사 합계</div>
+      <div class="tfree">기본검진은 전액 무료</div>
+    </div>
+    <div class="tamt" id="totalAmt">0원</div>
+  </div>
+
+  <button class="submit-btn" onclick="submitForm()">신청 접수하기</button>
+
+  <!-- 관리자 로그인 -->
+  <div class="form-card" id="adminLoginSection" style="margin-top:32px;">
+    <div class="section-title"><div class="section-icon">🔒</div>관리자 신청 현황</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input type="password" id="adminPw" placeholder="관리자 비밀번호 입력" style="flex:1;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:14px;" onkeydown="if(event.key==='Enter')checkPw()">
+      <button onclick="checkPw()" style="padding:11px 20px;background:var(--primary);color:white;border:none;border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;">확인</button>
+    </div>
+    <div id="pwError" style="color:var(--red);font-size:12px;margin-top:8px;display:none;">비밀번호가 올바르지 않습니다.</div>
+  </div>
+
+  <!-- 신청 현황 -->
+  <div class="form-card result-section" id="resultSection" style="margin-top:0;display:none;">
+    <div class="result-header">
+      <h2>📋 신청 현황 <span id="resultCount" style="font-size:13px;color:var(--text-muted);font-weight:400;"></span></h2>
+      <div style="display:flex;gap:8px;">
+        <button class="copy-btn" onclick="copyToClipboard()">📋 엑셀 복사</button>
+        <button onclick="lockAdmin()" style="padding:9px 16px;background:#E0E0E0;color:var(--text);border:none;border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">🔒 잠금</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="result-table" id="resultTable">
+        <thead>
+          <tr>
+            <th>No</th><th>이름</th><th>연락처</th>
+            <th>검진일자</th><th>내시경</th><th>추가검사</th><th>추가비용</th><th>신청일시</th><th>관리</th>
+          </tr>
+        </thead>
+        <tbody id="resultBody">
+          <tr><td colspan="9" class="empty-state">아직 신청 내역이 없습니다.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 데이터 ──────────────────────────────────────────
+const OPTIONAL_ITEMS = [
+  { id:'col', name:'수면대장내시경', note:'조직검사비 별도', orig:130000, disc:117000 },
+  { id:'allergy', name:'알레르기검사', note:'', orig:40000, disc:36000 },
+  { id:'heart', name:'심장초음파', note:'', orig:120000, disc:108000 },
+  { id:'carotid', name:'경동맥초음파', note:'', orig:100000, disc:90000 },
+  { id:'thyroid', name:'갑상선초음파+혈액검사', note:'free T4, TSH', orig:80000, disc:72000 },
+  { id:'prostate', name:'전립선초음파+PSA', note:'종양표지자', orig:60000, disc:54000 },
+  { id:'pelvis', name:'골반초음파+CA125', note:'종양표지자', orig:70000, disc:63000 },
+  { id:'breast', name:'유방초음파+유방촬영', note:'', orig:100000, disc:90000 },
+  { id:'hpv', name:'HPV검사+CA125', note:'인유두종·종양표지자', orig:80000, disc:72000 },
+];
+
+// 날짜 생성
+const EXCLUDED_DATES = ['2026-03-31', '2026-04-21', '2026-04-30'];
+
+function getWorkDates() {
+  const dates = [];
+  const start = new Date('2026-03-16');
+  const end = new Date('2026-04-30');
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) dates.push(new Date(d)); // 주말 제외
+  }
+  return dates;
+}
+
+// ── Google Sheets 연동 ───────────────────────────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPuiy-NakGnRVOSYzbPy30kEm36_aQi_yvAs3SXF2pv-49SGO7lrm_8YULwDVJwg/exec';
+
+let applications = [];
+
+// 구글 시트 날짜값 → YYYY-MM-DD 변환
+function parseSheetDate(val) {
+  if (!val) return '';
+  const s = String(val);
+  // 이미 YYYY-MM-DD 형식
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // ISO 형식 (2026-03-15T15:00:00.000Z 등) → 한국시간 기준
+  if (s.includes('T')) {
+    const d = new Date(s);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()+1).padStart(2,'0'); // UTC+9 보정
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return s;
+}
+
+async function loadApps() {
+  try {
+    const res = await fetch(SCRIPT_URL + '?t=' + Date.now()); // 캐시 방지
+    const json = await res.json();
+    const rows = json.data;
+    if (!rows || rows.length <= 1) { applications = []; renderDates(); return; }
+    applications = rows.slice(1).filter(r => r[1]).map((r, i) => ({
+      id: i+1,
+      name: r[1],
+      phone: r[2],
+      date: parseSheetDate(r[3]),
+      endo: r[4],
+      opts: r[5],
+      optCost: r[6],
+      createdAt: r[7]
+    }));
+  } catch(e) {
+    applications = [];
+  }
+  renderDates();
+}
+
+async function saveApp(app) {
+  await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(app)
+  });
+}
+
+function getCount(dateStr) {
+  return applications.filter(a => a.date === dateStr).length;
+}
+
+// ── 날짜 그리드 렌더 ─────────────────────────────────
+const DOW_KR = ['일','월','화','수','목','금','토'];
+
+function renderDates() {
+  const grid = document.getElementById('dateGrid');
+  const dates = getWorkDates();
+  grid.innerHTML = '';
+  dates.forEach(d => {
+    // toISOString() 대신 로컬 날짜 직접 사용 (timezone 버그 수정)
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const isExcluded = EXCLUDED_DATES.includes(dateStr);
+    const cnt = getCount(dateStr);
+    const remaining = 4 - cnt;
+    const full = remaining <= 0 || isExcluded;
+    const almost = remaining === 1 && !isExcluded;
+
+    const btn = document.createElement('button');
+    btn.className = 'date-btn' + (full?' full':'') + (almost?' almost':'') + (isExcluded?' excluded':'');
+    btn.dataset.date = dateStr;
+    btn.type = 'button';
+    btn.innerHTML = `
+      <span class="dow">${DOW_KR[d.getDay()]}</span>
+      <span class="day">${d.getMonth()+1}/${d.getDate()}</span>
+      <span class="slots">${isExcluded ? '회사행사' : (full ? '마감' : remaining+'명 가능')}</span>
+    `;
+    if (!full) btn.onclick = () => selectDate(dateStr, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function selectDate(dateStr, btn) {
+  document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('selectedDate').value = dateStr;
+}
+
+// ── 옵션 그리드 렌더 ─────────────────────────────────
+function renderOptions() {
+  const grid = document.getElementById('optGrid');
+  OPTIONAL_ITEMS.forEach(item => {
+    const card = document.createElement('label');
+    card.className = 'opt-card';
+    card.htmlFor = 'opt_'+item.id;
+    card.innerHTML = `
+      <input type="checkbox" id="opt_${item.id}" value="${item.id}" onchange="calcTotal()">
+      <div>
+        <span class="opt-name">${item.name}${item.note ? '<br><span style="font-size:11px;color:var(--text-muted)">'+item.note+'</span>' : ''}</span>
+        <div class="opt-price">
+          <span style="text-decoration:line-through;margin-right:4px;">${item.orig.toLocaleString()}원</span>
+          → <span class="disc">${item.disc.toLocaleString()}원</span>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  document.querySelectorAll('.opt-card input').forEach(cb => {
+    cb.addEventListener('change', () => {
+      cb.closest('.opt-card').classList.toggle('checked', cb.checked);
+    });
+  });
+}
+
+// ── 내시경 선택 ──────────────────────────────────────
+document.querySelectorAll('.radio-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    card.querySelector('input').checked = true;
+  });
+});
+// 기본 선택
+document.getElementById('endo_no').classList.add('selected');
+document.querySelector('#endo_no input').checked = true;
+
+// ── 합계 계산 ────────────────────────────────────────
+function calcTotal() {
+  let total = 0;
+  document.querySelectorAll('.opt-card input:checked').forEach(cb => {
+    const item = OPTIONAL_ITEMS.find(i => i.id === cb.value);
+    if (item) total += item.disc;
+  });
+  document.getElementById('totalAmt').textContent = total.toLocaleString()+'원';
+}
+
+// ── 폼 제출 ──────────────────────────────────────────
+async function submitForm() {
+  const name = document.getElementById('name').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const date = document.getElementById('selectedDate').value;
+  const endo = document.querySelector('input[name="endo"]:checked')?.value;
+
+  if (!name) { showToast('이름을 입력해주세요.'); return; }
+  if (!phone) { showToast('연락처를 입력해주세요.'); return; }
+  if (!date) { showToast('검진 일자를 선택해주세요.'); return; }
+  if (!endo) { showToast('내시경 여부를 선택해주세요.'); return; }
+  if (getCount(date) >= 4) { showToast('선택한 날짜는 정원이 마감되었습니다.'); return; }
+
+  const duplicate = applications.find(a => a.name === name && a.phone === phone);
+  if (duplicate) { showToast(`⚠️ ${name}님은 이미 ${duplicate.date} 으로 신청하셨습니다.`); return; }
+
+  const opts = [];
+  let optCost = 0;
+  document.querySelectorAll('.opt-card input:checked').forEach(cb => {
+    const item = OPTIONAL_ITEMS.find(i => i.id === cb.value);
+    if (item) { opts.push(item.name); optCost += item.disc; }
+  });
+
+  const now = new Date();
+  const app = {
+    name,
+    phone,
+    date,
+    endo,
+    opts: opts.join(', ') || '-',
+    optCost,
+    createdAt: now.toLocaleString('ko-KR')
+  };
+
+  // 버튼 로딩
+  const btn = document.querySelector('.submit-btn');
+  btn.textContent = '신청 중...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(app)
+    });
+    const result = await res.json();
+    if (result.result === 'full') {
+      showToast('❌ 해당 날짜는 정원이 마감되었습니다.');
+      await loadApps();
+      return;
+    }
+    if (result.result === 'duplicate') {
+      showToast(`⚠️ 이미 ${result.date} 으로 신청하셨습니다.`);
+      return;
+    }
+    applications.push({ ...app, id: Date.now() });
+    renderDates();
+    resetForm();
+    showToast('✅ 신청이 완료되었습니다!');
+  } catch(e) {
+    showToast('❌ 오류가 발생했습니다. 다시 시도해주세요.');
+  } finally {
+    btn.textContent = '신청 접수하기';
+    btn.disabled = false;
+  }
+}
+
+function resetForm() {
+  document.getElementById('name').value = '';
+  document.getElementById('phone').value = '';
+  document.getElementById('selectedDate').value = '';
+  document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('endo_no').classList.add('selected');
+  document.querySelector('#endo_no input').checked = true;
+  document.querySelectorAll('.opt-card input').forEach(cb => { cb.checked = false; cb.closest('.opt-card').classList.remove('checked'); });
+  calcTotal();
+}
+
+// ── 비밀번호 ─────────────────────────────────────────
+const ADMIN_PW = 'a200219024';
+function checkPw() {
+  const val = document.getElementById('adminPw').value;
+  const errEl = document.getElementById('pwError');
+  if (val === ADMIN_PW) {
+    document.getElementById('adminLoginSection').style.display = 'none';
+    document.getElementById('resultSection').style.display = 'block';
+    errEl.style.display = 'none';
+    renderResult();
+  } else {
+    errEl.style.display = 'block';
+    document.getElementById('adminPw').value = '';
+  }
+}
+function lockAdmin() {
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('adminLoginSection').style.display = 'block';
+  document.getElementById('adminPw').value = '';
+}
+
+// ── 결과 테이블 ──────────────────────────────────────
+function renderResult() {
+  const tbody = document.getElementById('resultBody');
+  const countEl = document.getElementById('resultCount');
+  countEl.textContent = `(총 ${applications.length}명)`;
+
+  if (applications.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">아직 신청 내역이 없습니다.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = applications.map((a, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><strong>${a.name}</strong></td>
+      <td>${a.phone}</td>
+      <td>${a.date}</td>
+      <td><span class="tag tag-endo">${a.endo}</span></td>
+      <td>${a.opts === '-' ? '-' : a.opts.split(', ').map(o=>`<span class="tag tag-opt">${o}</span>`).join('')}</td>
+      <td>${a.optCost > 0 ? a.optCost.toLocaleString()+'원' : '-'}</td>
+      <td style="color:var(--text-muted);font-size:11px;">${a.createdAt}</td>
+      <td><button onclick="deleteApp(${a.id})" style="padding:5px 12px;background:#FADBD8;color:#E74C3C;border:1px solid #F1948A;border-radius:6px;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">삭제</button></td>
+    </tr>
+  `).join('');
+}
+
+// ── 삭제 ─────────────────────────────────────────────
+async function deleteApp(id) {
+  const app = applications.find(a => a.id === id);
+  if (!app) return;
+  if (!confirm(`${app.name}님 (${app.date}) 신청을 삭제할까요?\n삭제 후 해당 날짜에 재신청이 가능해집니다.`)) return;
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete', name: app.name, phone: app.phone, date: app.date })
+    });
+    applications = applications.filter(a => a.id !== id);
+    renderDates();
+    renderResult();
+    showToast(`🗑️ ${app.name}님 신청이 삭제되었습니다.`);
+  } catch(e) {
+    showToast('❌ 삭제 중 오류가 발생했습니다.');
+  }
+}
+
+// ── 엑셀 복사 ────────────────────────────────────────
+function copyToClipboard() {
+  if (applications.length === 0) { showToast('신청 내역이 없습니다.'); return; }
+  const header = ['No','이름','연락처','검진일자','내시경','추가검사','추가비용','신청일시'].join('\t');
+  const rows = applications.map((a,i) => [
+    i+1, a.name, a.phone, a.date, a.endo, a.opts, a.optCost > 0 ? a.optCost+'원' : '-', a.createdAt
+  ].join('\t'));
+  const text = [header, ...rows].join('\n');
+  navigator.clipboard.writeText(text).then(() => showToast('📋 클립보드에 복사되었습니다. 엑셀에 붙여넣기 하세요!'));
+}
+
+// ── 토스트 ───────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── 초기화 ───────────────────────────────────────────
+renderOptions();
+calcTotal();
+loadApps();
+</script>
+</body>
+</html>
